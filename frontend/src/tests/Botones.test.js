@@ -9,34 +9,34 @@ describe('Botones.vue', () => {
     expect(buttons).toHaveLength(4)
   })
 
-  it('emite evento calcular con "sumar" al hacer clic en Sumar', async () => {
+  it('emite evento calcular con "sumar" al hacer clic en Add', async () => {
     const wrapper = mount(Botones)
-    const btnSumar = wrapper.find('.btn-sumar')
-    await btnSumar.trigger('click')
+    const buttons = wrapper.findAll('.btn-operation')
+    await buttons[0].trigger('click')
     expect(wrapper.emitted('calcular')).toBeTruthy()
     expect(wrapper.emitted('calcular')[0]).toEqual(['sumar'])
   })
 
-  it('emite evento calcular con "restar" al hacer clic en Restar', async () => {
+  it('emite evento calcular con "restar" al hacer clic en Subtract', async () => {
     const wrapper = mount(Botones)
-    const btnRestar = wrapper.find('.btn-restar')
-    await btnRestar.trigger('click')
+    const buttons = wrapper.findAll('.btn-operation')
+    await buttons[1].trigger('click')
     expect(wrapper.emitted('calcular')).toBeTruthy()
     expect(wrapper.emitted('calcular')[0]).toEqual(['restar'])
   })
 
-  it('emite evento calcular con "multiplicar" al hacer clic en Multiplicar', async () => {
+  it('emite evento calcular con "multiplicar" al hacer clic en Multiply', async () => {
     const wrapper = mount(Botones)
-    const btnMultiplicar = wrapper.find('.btn-multiplicar')
-    await btnMultiplicar.trigger('click')
+    const buttons = wrapper.findAll('.btn-operation')
+    await buttons[2].trigger('click')
     expect(wrapper.emitted('calcular')).toBeTruthy()
     expect(wrapper.emitted('calcular')[0]).toEqual(['multiplicar'])
   })
 
-  it('emite evento calcular con "dividir" al hacer clic en Dividir', async () => {
+  it('emite evento calcular con "dividir" al hacer clic en Divide', async () => {
     const wrapper = mount(Botones)
-    const btnDividir = wrapper.find('.btn-dividir')
-    await btnDividir.trigger('click')
+    const buttons = wrapper.findAll('.btn-operation')
+    await buttons[3].trigger('click')
     expect(wrapper.emitted('calcular')).toBeTruthy()
     expect(wrapper.emitted('calcular')[0]).toEqual(['dividir'])
   })
@@ -55,9 +55,10 @@ describe('Botones.vue', () => {
 
   it('botones tienen el texto correcto', () => {
     const wrapper = mount(Botones)
-    expect(wrapper.text()).toContain('Sumar')
-    expect(wrapper.text()).toContain('Restar')
-    expect(wrapper.text()).toContain('Multiplicar')
-    expect(wrapper.text()).toContain('Dividir')
+    expect(wrapper.text()).toContain('Add')
+    expect(wrapper.text()).toContain('Subtract')
+    expect(wrapper.text()).toContain('Multiply')
+    expect(wrapper.text()).toContain('Divide')
   })
 })
+

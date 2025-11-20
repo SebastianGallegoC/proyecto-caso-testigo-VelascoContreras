@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Display from '../components/Display.vue'
 
@@ -11,7 +11,8 @@ describe('Display.vue', () => {
         loading: false
       }
     })
-    expect(wrapper.text()).toContain('Selecciona una operación')
+    expect(wrapper.find('.placeholder-text').exists()).toBe(true)
+    expect(wrapper.text()).toContain('0')
   })
 
   it('muestra el resultado correctamente', () => {
@@ -22,8 +23,8 @@ describe('Display.vue', () => {
         loading: false
       }
     })
-    expect(wrapper.text()).toContain('15.0000')
-    expect(wrapper.text()).toContain('Resultado')
+    expect(wrapper.find('.result-value').exists()).toBe(true)
+    expect(wrapper.text()).toContain('15')
   })
 
   it('muestra error cuando hay un error', () => {
@@ -34,7 +35,7 @@ describe('Display.vue', () => {
         loading: false
       }
     })
-    expect(wrapper.text()).toContain('Error')
+    expect(wrapper.find('.error-state').exists()).toBe(true)
     expect(wrapper.text()).toContain('No se puede dividir por cero')
   })
 
@@ -46,7 +47,7 @@ describe('Display.vue', () => {
         loading: true
       }
     })
-    expect(wrapper.text()).toContain('Calculando')
+    expect(wrapper.find('.loading-state').exists()).toBe(true)
     expect(wrapper.find('.spinner').exists()).toBe(true)
   })
 
@@ -58,6 +59,9 @@ describe('Display.vue', () => {
         loading: false
       }
     })
-    expect(wrapper.text()).toContain('3.1416')
+    // El número puede formatearse con coma o punto según el locale
+    const text = wrapper.text()
+    expect(text.includes('3.14159') || text.includes('3,14159')).toBe(true)
   })
 })
+
