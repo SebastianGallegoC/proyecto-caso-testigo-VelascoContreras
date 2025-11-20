@@ -8,7 +8,7 @@
 
 ---
 
-## 📝 FORMAS DE EJECUTAR EL PROYECTO
+## 📝 FORMAS DE EJECUTAR EL PROYECT0
 
 ### ✅ MÉTODO 1: Script Automático (MÁS FÁCIL)
 
