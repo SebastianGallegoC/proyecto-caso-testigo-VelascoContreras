@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: calculadora_django_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-calculadora-secret-key-change-in-production
+    command: gunicorn --bind 0.0.0.0:8000 --workers 3 --reload calculadora_project.wsgi:application
+    restart: unless-stopped
+    networks:
+      - calculadora-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: calculadora_vue_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://backend:8000
+    command: npm run dev -- --host
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - calculadora-network
+
+volumes:
+  static_volume:
+
+networks:
+  calculadora-network:
+    driver: bridge

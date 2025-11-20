@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Django</title>
+    {% load static %}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .calculadora {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        input[type="number"] {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .botones {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-sumar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-restar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-multiplicar {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-dividir {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .resultado {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            display: none;
+        }
+
+        .resultado.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .resultado h2 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .resultado p {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .historial {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .historial h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .historial-item {
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            color: #555;
+            border-left: 4px solid #667eea;
+        }
+
+        .historial-vacio {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
+
+        .btn-limpiar {
+            background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 Calculadora</h1>
+        
+        <div class="calculadora">
+            <div class="input-group">
+                <label for="num1">Primer número:</label>
+                <input type="number" id="num1" step="any" placeholder="Ingrese el primer número" value="0">
+            </div>
+
+            <div class="input-group">
+                <label for="num2">Segundo número:</label>
+                <input type="number" id="num2" step="any" placeholder="Ingrese el segundo número" value="0">
+            </div>
+
+            <div class="botones">
+                <button class="btn-sumar" onclick="calcular('sumar')">➕ Sumar</button>
+                <button class="btn-restar" onclick="calcular('restar')">➖ Restar</button>
+                <button class="btn-multiplicar" onclick="calcular('multiplicar')">✖️ Multiplicar</button>
+                <button class="btn-dividir" onclick="calcular('dividir')">➗ Dividir</button>
+            </div>
+
+            <div id="resultado" class="resultado">
+                <h2>Resultado:</h2>
+                <p id="resultado-valor">0</p>
+            </div>
+        </div>
+
+        <div class="historial">
+            <h3>📋 Historial</h3>
+            <div id="historial-lista">
+                <div class="historial-vacio">No hay operaciones aún</div>
+            </div>
+            <button class="btn-limpiar" onclick="limpiarHistorial()">🗑️ Limpiar Historial</button>
+        </div>
+    </div>
+
+    <script>
+        let historial = [];
+
+        async function calcular(operacion) {
+            const num1 = parseFloat(document.getElementById('num1').value);
+            const num2 = parseFloat(document.getElementById('num2').value);
+            
+            if (isNaN(num1) || isNaN(num2)) {
+                mostrarError('Por favor ingrese números válidos');
+                return;
+            }
+
+            try {
+                const response = await fetch('/calcular/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        num1: num1,
+                        num2: num2,
+                        operacion: operacion
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mostrarResultado(data.resultado);
+                    agregarAlHistorial(num1, num2, operacion, data.resultado);
+                } else {
+                    mostrarError(data.error);
+                }
+            } catch (error) {
+                mostrarError('Error al conectar con el servidor');
+                console.error('Error:', error);
+            }
+        }
+
+        function mostrarResultado(valor) {
+            const resultadoDiv = document.getElementById('resultado');
+            const resultadoValor = document.getElementById('resultado-valor');
+            
+            resultadoDiv.classList.remove('error');
+            resultadoDiv.classList.add('show');
+            resultadoValor.textContent = valor.toFixed(4);
+        }
+
+        function mostrarError(mensaje) {
+            const resultadoDiv = document.getElementById('resultado');
+            const resultadoValor = document.getElementById('resultado-valor');
+            
+            resultadoDiv.classList.add('error', 'show');
+            resultadoValor.textContent = mensaje;
+        }
+
+        function agregarAlHistorial(num1, num2, operacion, resultado) {
+            const simbolos = {
+                'sumar': '+',
+                'restar': '-',
+                'multiplicar': '×',
+                'dividir': '÷'
+            };
+
+            const item = {
+                num1: num1,
+                num2: num2,
+                operacion: operacion,
+                resultado: resultado,
+                timestamp: new Date()
+            };
+
+            historial.unshift(item);
+            if (historial.length > 10) {
+                historial.pop();
+            }
+
+            actualizarHistorial();
+        }
+
+        function actualizarHistorial() {
+            const historialLista = document.getElementById('historial-lista');
+            
+            if (historial.length === 0) {
+                historialLista.innerHTML = '<div class="historial-vacio">No hay operaciones aún</div>';
+                return;
+            }
+
+            const simbolos = {
+                'sumar': '+',
+                'restar': '-',
+                'multiplicar': '×',
+                'dividir': '÷'
+            };
+
+            historialLista.innerHTML = historial.map(item => `
+                <div class="historial-item">
+                    ${item.num1} ${simbolos[item.operacion]} ${item.num2} = ${item.resultado.toFixed(4)}
+                </div>
+            `).join('');
+        }
+
+        function limpiarHistorial() {
+            if (confirm('¿Está seguro de que desea limpiar el historial?')) {
+                historial = [];
+                actualizarHistorial();
+            }
+        }
+
+        // Permitir calcular con Enter
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                calcular('sumar');
+            }
+        });
+    </script>
+</body>
+</html>
