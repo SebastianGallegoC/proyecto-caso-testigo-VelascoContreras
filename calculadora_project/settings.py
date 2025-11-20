@@ -139,23 +139,31 @@ CORS_ALLOWED_ORIGINS_ENV = os.getenv('CORS_ALLOWED_ORIGINS', '')
 if CORS_ALLOWED_ORIGINS_ENV:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_ENV.split(',') if origin.strip()]
 else:
-    # Valores por defecto para desarrollo
+    # Valores por defecto para desarrollo y producción
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
     ]
 
-# En producción, también permitir todos los orígenes de ALLOWED_HOSTS
-if not DEBUG:
-    # Agregar hosts permitidos al CORS
-    for host in ALLOWED_HOSTS:
-        if host != '*':
-            CORS_ALLOWED_ORIGINS.extend([
-                f'http://{host}',
-                f'https://{host}',
-                f'http://{host}:5173',
-                f'https://{host}:5173',
-            ])
+# Agregar automáticamente hosts permitidos al CORS (si no es wildcard)
+for host in ALLOWED_HOSTS:
+    if host and host != '*':
+        # Agregar con y sin puerto
+        origins_to_add = [
+            f'http://{host}',
+            f'https://{host}',
+            f'http://{host}:5173',
+            f'https://{host}:5173',
+        ]
+        for origin in origins_to_add:
+            if origin not in CORS_ALLOWED_ORIGINS:
+                CORS_ALLOWED_ORIGINS.append(origin)
+
+# Si ALLOWED_HOSTS tiene wildcard, permitir todos los orígenes
+if '*' in ALLOWED_HOSTS:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOW_CREDENTIALS = True
 
