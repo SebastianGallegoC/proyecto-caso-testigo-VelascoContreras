@@ -73,14 +73,7 @@ jobs:
     - name: Run Vue tests
       working-directory: ./frontend
       run: |
-        npm test -- --run --coverage
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./frontend/coverage/coverage-final.json
-        flags: frontend
-        name: frontend-coverage
+        npm test -- --run
 
   # Job 3: Lint & Code Quality
   code-quality:
