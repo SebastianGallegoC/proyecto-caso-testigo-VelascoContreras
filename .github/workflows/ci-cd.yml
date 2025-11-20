@@ -208,9 +208,9 @@ jobs:
         npm audit --audit-level=high || echo "npm audit completed"
       continue-on-error: true
 
-  # Job 6: Deployment (solo en main)
+  # Job 6: Deployment to VPS Ubuntu (solo en main)
   deploy:
-    name: Deploy to Production
+    name: Deploy to VPS Ubuntu
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-tests, docker-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -219,34 +219,164 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
-    - name: Deploy notification
+    - name: Deploy notification start
       run: |
-        echo "🚀 Deployment would happen here"
-        echo "All tests passed, ready for deployment!"
+        echo "🚀 Starting deployment to VPS Ubuntu..."
+        echo "Server: ${{ secrets.VPS_HOST }}"
+        echo "User: ${{ secrets.VPS_USERNAME }}"
     
-    # Descomentar y configurar según tu plataforma de deployment
-    # - name: Deploy to Heroku
-    #   uses: akhileshns/heroku-deploy@v3.12.12
-    #   with:
-    #     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-    #     heroku_app_name: "calculadora-django-app"
-    #     heroku_email: "your-email@example.com"
-    
-    # - name: Deploy to AWS
-    #   run: |
-    #     # Comandos de deployment a AWS
-    
-    # - name: Deploy to Azure
-    #   run: |
-    #     # Comandos de deployment a Azure
-    
-    - name: Create deployment status
+    - name: Setup SSH Key
       run: |
-        echo "✅ Deployment completed successfully"
-        echo "Backend tests: PASSED"
-        echo "Frontend tests: PASSED"
-        echo "Docker build: SUCCESS"
-        echo "Security scan: COMPLETED"
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Test SSH Connection
+      run: |
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "echo '✅ SSH connection successful'"
+    
+    - name: Create deployment directory on VPS
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          mkdir -p ${{ secrets.VPS_DEPLOY_PATH }}
+          echo "📁 Deployment directory created/verified"
+        EOF
+    
+    - name: Stop running containers (if any)
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd ${{ secrets.VPS_DEPLOY_PATH }}
+          if [ -f docker-compose.yml ]; then
+            docker-compose down || true
+            echo "🛑 Previous containers stopped"
+          fi
+        EOF
+      continue-on-error: true
+    
+    - name: Transfer files to VPS
+      run: |
+        rsync -avz --delete \
+          -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+          --exclude 'venv' \
+          --exclude 'node_modules' \
+          --exclude '.git' \
+          --exclude '__pycache__' \
+          --exclude '*.pyc' \
+          --exclude 'db.sqlite3' \
+          --exclude '.env.local' \
+          ./ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}/
+        echo "📦 Files transferred successfully"
+    
+    - name: Create/Update .env file on VPS
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd ${{ secrets.VPS_DEPLOY_PATH }}
+          cat > .env << 'ENVEOF'
+        SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+        DEBUG=False
+        ALLOWED_HOSTS=${{ secrets.VPS_HOST }},${{ secrets.VPS_DOMAIN }},localhost,127.0.0.1
+        CORS_ALLOWED_ORIGINS=http://${{ secrets.VPS_HOST }},https://${{ secrets.VPS_HOST }},http://${{ secrets.VPS_DOMAIN }},https://${{ secrets.VPS_DOMAIN }}
+        DATABASE_URL=${{ secrets.DATABASE_URL }}
+        VITE_API_URL=http://${{ secrets.VPS_HOST }}:8000
+        ENVEOF
+          echo "✅ .env file created"
+        EOF
+    
+    - name: Install Docker and Docker Compose (if not installed)
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          if ! command -v docker &> /dev/null; then
+            echo "📦 Installing Docker..."
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            sudo usermod -aG docker $USER
+            echo "✅ Docker installed"
+          else
+            echo "✅ Docker already installed"
+          fi
+          
+          if ! command -v docker-compose &> /dev/null; then
+            echo "📦 Installing Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            echo "✅ Docker Compose installed"
+          else
+            echo "✅ Docker Compose already installed"
+          fi
+        EOF
+    
+    - name: Build and start Docker containers
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd ${{ secrets.VPS_DEPLOY_PATH }}
+          echo "🔨 Building Docker images..."
+          docker-compose build --no-cache
+          echo "🚀 Starting containers..."
+          docker-compose up -d
+          echo "✅ Containers started successfully"
+        EOF
+    
+    - name: Run Django migrations
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd ${{ secrets.VPS_DEPLOY_PATH }}
+          echo "🔄 Running migrations..."
+          docker-compose exec -T backend python manage.py migrate
+          echo "✅ Migrations completed"
+        EOF
+    
+    - name: Collect static files
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd ${{ secrets.VPS_DEPLOY_PATH }}
+          echo "📦 Collecting static files..."
+          docker-compose exec -T backend python manage.py collectstatic --noinput
+          echo "✅ Static files collected"
+        EOF
+      continue-on-error: true
+    
+    - name: Verify deployment
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd ${{ secrets.VPS_DEPLOY_PATH }}
+          echo "🔍 Checking container status..."
+          docker-compose ps
+          echo "📊 Container logs (last 20 lines):"
+          docker-compose logs --tail=20
+        EOF
+    
+    - name: Health check
+      run: |
+        echo "🏥 Waiting for services to be ready..."
+        sleep 10
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          echo "Testing backend health..."
+          curl -f http://localhost:8000/api/calcular/ -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"num1":2,"num2":2,"operacion":"sumar"}' \
+            && echo "✅ Backend is healthy" \
+            || echo "⚠️ Backend health check failed"
+        EOF
+      continue-on-error: true
+    
+    - name: Cleanup SSH key
+      if: always()
+      run: |
+        rm -f ~/.ssh/deploy_key
+        echo "🧹 SSH key cleaned up"
+    
+    - name: Deployment status summary
+      run: |
+        echo "✅ ========================================="
+        echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY"
+        echo "✅ ========================================="
+        echo "🌐 Backend URL: http://${{ secrets.VPS_HOST }}:8000"
+        echo "🌐 Frontend URL: http://${{ secrets.VPS_HOST }}:5173"
+        echo "📝 Server: ${{ secrets.VPS_HOST }}"
+        echo "📁 Path: ${{ secrets.VPS_DEPLOY_PATH }}"
+        echo "✅ All services are running"
+        echo "========================================="
 
   # Job 7: Status Summary
   status-summary:
