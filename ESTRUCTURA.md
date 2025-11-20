@@ -12,7 +12,8 @@ calculadora_django/
 │   ├── 📄 apps.py                     # Configuración de la app
 │   ├── 📄 models.py                   # Modelos (vacío por ahora)
 │   ├── 📄 tests.py                    # Tests unitarios
-│   ├── 📄 urls.py                     # URLs de la app
+│   ├── 📄 urls.py 
+    |                    # URLs de la app
 │   └── 📄 views.py                    # Vistas (lógica del backend)
 │
 ├── 📁 calculadora_project/            # Configuración del proyecto Django
