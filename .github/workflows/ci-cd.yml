@@ -146,7 +146,7 @@ jobs:
     
     - name: Test Docker Compose
       run: |
-        docker-compose config
+        docker compose config
     
     - name: Login to Docker Hub (optional)
       if: github.ref == 'refs/heads/main'
@@ -241,7 +241,7 @@ jobs:
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
           cd ${{ secrets.VPS_DEPLOY_PATH }}
           if [ -f docker-compose.yml ]; then
-            docker-compose down || true
+            docker compose down || true
             echo "🛑 Previous containers stopped"
           fi
         EOF
@@ -284,18 +284,19 @@ jobs:
             curl -fsSL https://get.docker.com -o get-docker.sh
             sudo sh get-docker.sh
             sudo usermod -aG docker $USER
-            echo "✅ Docker installed"
+            echo "✅ Docker installed (includes Docker Compose plugin)"
           else
             echo "✅ Docker already installed"
           fi
           
-          if ! command -v docker-compose &> /dev/null; then
-            echo "📦 Installing Docker Compose..."
+          # Verificar que Docker Compose funcione
+          if docker compose version &> /dev/null; then
+            echo "✅ Docker Compose plugin is available"
+          else
+            echo "⚠️ Docker Compose plugin not found, installing standalone..."
             sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
             echo "✅ Docker Compose installed"
-          else
-            echo "✅ Docker Compose already installed"
           fi
         EOF
     
@@ -304,9 +305,9 @@ jobs:
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
           cd ${{ secrets.VPS_DEPLOY_PATH }}
           echo "🔨 Building Docker images..."
-          docker-compose build --no-cache
+          docker compose build --no-cache
           echo "🚀 Starting containers..."
-          docker-compose up -d
+          docker compose up -d
           echo "✅ Containers started successfully"
         EOF
     
@@ -315,7 +316,7 @@ jobs:
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
           cd ${{ secrets.VPS_DEPLOY_PATH }}
           echo "🔄 Running migrations..."
-          docker-compose exec -T backend python manage.py migrate
+          docker compose exec -T backend python manage.py migrate
           echo "✅ Migrations completed"
         EOF
     
@@ -324,7 +325,7 @@ jobs:
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
           cd ${{ secrets.VPS_DEPLOY_PATH }}
           echo "📦 Collecting static files..."
-          docker-compose exec -T backend python manage.py collectstatic --noinput
+          docker compose exec -T backend python manage.py collectstatic --noinput
           echo "✅ Static files collected"
         EOF
       continue-on-error: true
@@ -334,9 +335,9 @@ jobs:
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
           cd ${{ secrets.VPS_DEPLOY_PATH }}
           echo "🔍 Checking container status..."
-          docker-compose ps
+          docker compose ps
           echo "📊 Container logs (last 20 lines):"
-          docker-compose logs --tail=20
+          docker compose logs --tail=20
         EOF
     
     - name: Health check
