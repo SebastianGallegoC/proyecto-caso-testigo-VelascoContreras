@@ -120,17 +120,21 @@ export default {
 }
 
 .calculadora-card {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 40px;
-  max-width: 500px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+  max-width: 420px;
   width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 @media (max-width: 768px) {
   .calculadora-card {
-    padding: 20px;
+    padding: 24px;
+    border-radius: 20px;
   }
 }
 </style>
