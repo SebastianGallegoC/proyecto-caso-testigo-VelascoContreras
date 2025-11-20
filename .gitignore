@@ -52,9 +52,11 @@ frontend/.cache/
 .DS_Store
 
 # Environment variables
-.env
+# .env se incluye en el repo para facilitar la configuración
+# En producción, usar variables de entorno reales
 .env.local
 .env.*.local
+!.env
 
 # Coverage
 htmlcov/
