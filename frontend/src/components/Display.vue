@@ -1,37 +1,20 @@
 <template>
   <div class="display-container">
-    <div class="brand">
-      <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 7H7V9H9V7Z" fill="currentColor"/>
-        <path d="M13 15H11V17H13V15Z" fill="currentColor"/>
-        <path d="M15 15H17V17H15V15Z" fill="currentColor"/>
-        <path d="M9 11H7V13H9V11Z" fill="currentColor"/>
-        <path d="M13 7H11V9H13V7Z" fill="currentColor"/>
-        <path d="M9 15H7V17H9V15Z" fill="currentColor"/>
-        <path d="M13 11H11V13H13V11Z" fill="currentColor"/>
-        <path d="M17 7H15V9H17V7Z" fill="currentColor"/>
-        <path d="M17 11H15V13H17V11Z" fill="currentColor"/>
-      </svg>
-      <span class="brand-name">Calculator</span>
-    </div>
-    
     <div class="display-screen">
+      <div class="display-operation" v-if="operation && previousValue !== null">
+        {{ formatearNumero(previousValue) }} {{ getOperationSymbol(operation) }}
+      </div>
+      
       <div v-if="loading" class="display-content loading-state">
         <div class="spinner"></div>
-        <span class="loading-text">Calculating...</span>
       </div>
       
       <div v-else-if="error" class="display-content error-state">
-        <div class="error-icon">!</div>
         <div class="error-message">{{ error }}</div>
       </div>
       
-      <div v-else-if="resultado !== null" class="display-content result-state">
-        <div class="result-value">{{ formatearNumero(resultado) }}</div>
-      </div>
-      
-      <div v-else class="display-content placeholder-state">
-        <div class="placeholder-text">0</div>
+      <div v-else class="display-value">
+        {{ displayValue }}
       </div>
     </div>
   </div>
@@ -41,15 +24,15 @@
 export default {
   name: 'Display',
   props: {
-    num1: {
-      type: Number,
-      default: 0
+    displayValue: {
+      type: String,
+      default: '0'
     },
-    num2: {
-      type: Number,
-      default: 0
+    operation: {
+      type: String,
+      default: null
     },
-    resultado: {
+    previousValue: {
       type: Number,
       default: null
     },
@@ -67,16 +50,23 @@ export default {
       if (num === null || num === undefined) return '0'
       const formatted = parseFloat(num)
       
-      // Si es un número muy grande o muy pequeño, usar notación científica
       if (Math.abs(formatted) > 999999999 || (Math.abs(formatted) < 0.0001 && formatted !== 0)) {
         return formatted.toExponential(4)
       }
       
-      // Limitar decimales para números normales
       if (formatted % 1 === 0) {
         return formatted.toLocaleString()
       }
-      return formatted.toLocaleString(undefined, { maximumFractionDigits: 6 })
+      return formatted.toLocaleString(undefined, { maximumFractionDigits: 8 })
+    },
+    getOperationSymbol(op) {
+      const symbols = {
+        'sumar': '+',
+        'restar': '−',
+        'multiplicar': '×',
+        'dividir': '÷'
+      }
+      return symbols[op] || ''
     }
   }
 }
@@ -84,119 +74,90 @@ export default {
 
 <style scoped>
 .display-container {
-  margin-bottom: 28px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 0 4px;
-}
-
-.logo {
-  width: 20px;
-  height: 20px;
-  color: #1f2937;
-}
-
-.brand-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #6b7280;
-  letter-spacing: 0.3px;
+  margin-bottom: 20px;
 }
 
 .display-screen {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(to bottom, #4a5568, #2d3748);
   border-radius: 12px;
-  padding: 24px 20px;
-  min-height: 100px;
-  transition: all 0.2s ease;
+  padding: 20px 18px;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  box-shadow: 
+    inset 0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.display-operation {
+  color: #a0aec0;
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 4px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+.display-value {
+  color: #e8f5e9;
+  font-size: 36px;
+  font-weight: 300;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(232, 245, 233, 0.5);
+  word-break: break-all;
+  text-align: right;
+  width: 100%;
 }
 
 .display-content {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  min-height: 52px;
-}
-
-.result-value,
-.placeholder-text {
-  font-size: 48px;
-  font-weight: 300;
-  color: #111827;
-  letter-spacing: -1px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  transition: all 0.3s ease;
-}
-
-.placeholder-text {
-  color: #9ca3af;
+  width: 100%;
 }
 
 .loading-state {
-  align-items: center;
   gap: 12px;
 }
 
 .spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid #e5e7eb;
-  border-top-color: #3b82f6;
+  border: 3px solid rgba(232, 245, 233, 0.3);
+  border-top-color: #e8f5e9;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-.loading-text {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
 .error-state {
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
 }
 
-.error-icon {
-  width: 32px;
-  height: 32px;
-  background: #fee2e2;
-  color: #dc2626;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 18px;
-}
-
 .error-message {
-  font-size: 13px;
-  color: #dc2626;
-  text-align: center;
+  color: #fc8181;
+  font-size: 14px;
   font-weight: 500;
+  text-align: center;
 }
 
-@media (max-width: 480px) {
-  .result-value,
-  .placeholder-text {
-    font-size: 40px;
+@media (max-width: 768px) {
+  .display-value {
+    font-size: 32px;
   }
   
-  .display-screen {
-    padding: 20px 16px;
+  .display-operation {
+    font-size: 14px;
   }
 }
 </style>

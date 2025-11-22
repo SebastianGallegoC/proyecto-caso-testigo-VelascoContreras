@@ -17,7 +17,7 @@ import Calculadora from './components/Calculadora.vue'
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
   min-height: 100vh;
   display: flex;
   justify-content: center;

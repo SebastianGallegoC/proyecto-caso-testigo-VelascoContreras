@@ -2,21 +2,20 @@
   <div class="calculadora-container">
     <div class="calculadora-card">
       <Display 
-        :num1="num1" 
-        :num2="num2" 
-        :resultado="resultado" 
+        :displayValue="displayValue"
+        :operation="currentOperation"
+        :previousValue="previousValue"
         :error="error"
         :loading="loading"
       />
       
-      <Input 
-        v-model:num1="num1" 
-        v-model:num2="num2"
-        :disabled="loading"
-      />
-      
-      <Botones 
-        @calcular="calcular"
+      <Teclado 
+        @number-click="handleNumberClick"
+        @operator-click="handleOperatorClick"
+        @equals-click="handleEqualsClick"
+        @clear-click="handleClearClick"
+        @decimal-click="handleDecimalClick"
+        @backspace-click="handleBackspaceClick"
         :disabled="loading"
       />
       
@@ -28,8 +27,7 @@
 <script>
 import { ref } from 'vue'
 import Display from './Display.vue'
-import Input from './Input.vue'
-import Botones from './Botones.vue'
+import Teclado from './Teclado.vue'
 import Historial from './Historial.vue'
 import { calculadoraAPI } from '../services/api'
 
@@ -37,37 +35,110 @@ export default {
   name: 'Calculadora',
   components: {
     Display,
-    Input,
-    Botones,
+    Teclado,
     Historial
   },
   setup() {
-    const num1 = ref(0)
-    const num2 = ref(0)
-    const resultado = ref(null)
+    const displayValue = ref('0')
+    const previousValue = ref(null)
+    const currentOperation = ref(null)
+    const waitingForOperand = ref(false)
     const error = ref(null)
     const loading = ref(false)
     const historial = ref([])
 
-    const calcular = async (operacion) => {
+    const handleNumberClick = (number) => {
       error.value = null
-      resultado.value = null
-      loading.value = true
-
-      try {
-        const data = await calculadoraAPI.calcular(
-          parseFloat(num1.value),
-          parseFloat(num2.value),
-          operacion
-        )
-        
-        resultado.value = data.resultado
-        agregarAlHistorial(data)
-      } catch (err) {
-        error.value = err.message
-      } finally {
-        loading.value = false
+      
+      if (waitingForOperand.value) {
+        displayValue.value = String(number)
+        waitingForOperand.value = false
+      } else {
+        displayValue.value = displayValue.value === '0' 
+          ? String(number) 
+          : displayValue.value + number
       }
+    }
+
+    const handleDecimalClick = () => {
+      error.value = null
+      
+      if (waitingForOperand.value) {
+        displayValue.value = '0.'
+        waitingForOperand.value = false
+      } else if (displayValue.value.indexOf('.') === -1) {
+        displayValue.value = displayValue.value + '.'
+      }
+    }
+
+    const handleBackspaceClick = () => {
+      error.value = null
+      
+      if (!waitingForOperand.value) {
+        displayValue.value = displayValue.value.length > 1 
+          ? displayValue.value.slice(0, -1)
+          : '0'
+      }
+    }
+
+    const handleOperatorClick = async (operacion) => {
+      const inputValue = parseFloat(displayValue.value)
+
+      if (previousValue.value === null) {
+        previousValue.value = inputValue
+      } else if (currentOperation.value) {
+        // Si ya hay una operación pendiente, ejecutarla primero
+        await executeOperation()
+      }
+
+      waitingForOperand.value = true
+      currentOperation.value = operacion
+    }
+
+    const handleEqualsClick = async () => {
+      if (currentOperation.value && previousValue.value !== null) {
+        await executeOperation()
+        currentOperation.value = null
+      }
+    }
+
+    const executeOperation = async () => {
+      const inputValue = parseFloat(displayValue.value)
+      
+      if (currentOperation.value && previousValue.value !== null) {
+        error.value = null
+        loading.value = true
+
+        try {
+          const data = await calculadoraAPI.calcular(
+            previousValue.value,
+            inputValue,
+            currentOperation.value
+          )
+          
+          displayValue.value = String(data.resultado)
+          previousValue.value = data.resultado
+          waitingForOperand.value = true
+          
+          agregarAlHistorial(data)
+        } catch (err) {
+          error.value = err.message
+          displayValue.value = '0'
+          previousValue.value = null
+          currentOperation.value = null
+          waitingForOperand.value = false
+        } finally {
+          loading.value = false
+        }
+      }
+    }
+
+    const handleClearClick = () => {
+      displayValue.value = '0'
+      previousValue.value = null
+      currentOperation.value = null
+      waitingForOperand.value = false
+      error.value = null
     }
 
     const agregarAlHistorial = (data) => {
@@ -98,13 +169,18 @@ export default {
     }
 
     return {
-      num1,
-      num2,
-      resultado,
+      displayValue,
+      previousValue,
+      currentOperation,
       error,
       loading,
       historial,
-      calcular,
+      handleNumberClick,
+      handleOperatorClick,
+      handleEqualsClick,
+      handleClearClick,
+      handleDecimalClick,
+      handleBackspaceClick,
       limpiarHistorial
     }
   }
@@ -120,21 +196,22 @@ export default {
 }
 
 .calculadora-card {
-  background: #ffffff;
-  border-radius: 24px;
+  background: #2d2d2d;
+  border-radius: 20px;
   box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.08);
-  padding: 32px;
-  max-width: 420px;
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  padding: 24px;
+  max-width: 380px;
   width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 768px) {
   .calculadora-card {
-    padding: 24px;
-    border-radius: 20px;
+    padding: 20px;
+    border-radius: 16px;
   }
 }
 </style>

@@ -68,7 +68,7 @@ export default {
 .historial-container {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .historial-header {
@@ -79,7 +79,7 @@ export default {
 }
 
 h3 {
-  color: #111827;
+  color: #e5e7eb;
   font-size: 14px;
   font-weight: 600;
   margin: 0;
@@ -89,7 +89,7 @@ h3 {
 .btn-clear {
   background: transparent;
   border: none;
-  color: #6b7280;
+  color: #9ca3af;
   cursor: pointer;
   padding: 6px;
   border-radius: 6px;
@@ -100,12 +100,12 @@ h3 {
 }
 
 .btn-clear:hover {
-  background: #f3f4f6;
-  color: #dc2626;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ef4444;
 }
 
 .btn-clear:active {
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .historial-lista {
@@ -124,17 +124,17 @@ h3 {
 }
 
 .historial-lista::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
 }
 
 .historial-lista::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .historial-vacio {
   text-align: center;
-  color: #9ca3af;
+  color: #6b7280;
   padding: 32px 20px;
   display: flex;
   flex-direction: column;
@@ -145,7 +145,7 @@ h3 {
 .empty-icon {
   width: 48px;
   height: 48px;
-  color: #d1d5db;
+  color: #4b5563;
 }
 
 .historial-vacio span {
@@ -155,30 +155,30 @@ h3 {
 
 .historial-item {
   padding: 12px 16px;
-  background: #f9fafb;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 0.2s ease;
-  border: 1px solid #f3f4f6;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .historial-item:hover {
-  background: #f3f4f6;
-  border-color: #e5e7eb;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .operation {
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 13px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
 .result {
-  color: #111827;
+  color: #e5e7eb;
   font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;

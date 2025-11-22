@@ -3,34 +3,55 @@ import { mount } from '@vue/test-utils'
 import Display from '../components/Display.vue'
 
 describe('Display.vue', () => {
-  it('muestra placeholder cuando no hay resultado', () => {
+  it('muestra valor por defecto cuando no hay entrada', () => {
     const wrapper = mount(Display, {
       props: {
-        resultado: null,
+        displayValue: '0',
+        operation: null,
+        previousValue: null,
         error: null,
         loading: false
       }
     })
-    expect(wrapper.find('.placeholder-text').exists()).toBe(true)
+    expect(wrapper.find('.display-value').exists()).toBe(true)
     expect(wrapper.text()).toContain('0')
   })
 
-  it('muestra el resultado correctamente', () => {
+  it('muestra el valor ingresado correctamente', () => {
     const wrapper = mount(Display, {
       props: {
-        resultado: 15,
+        displayValue: '15',
+        operation: null,
+        previousValue: null,
         error: null,
         loading: false
       }
     })
-    expect(wrapper.find('.result-value').exists()).toBe(true)
+    expect(wrapper.find('.display-value').exists()).toBe(true)
     expect(wrapper.text()).toContain('15')
+  })
+
+  it('muestra la operación en curso', () => {
+    const wrapper = mount(Display, {
+      props: {
+        displayValue: '5',
+        operation: 'sumar',
+        previousValue: 10,
+        error: null,
+        loading: false
+      }
+    })
+    expect(wrapper.find('.display-operation').exists()).toBe(true)
+    expect(wrapper.text()).toContain('10')
+    expect(wrapper.text()).toContain('+')
   })
 
   it('muestra error cuando hay un error', () => {
     const wrapper = mount(Display, {
       props: {
-        resultado: null,
+        displayValue: '0',
+        operation: null,
+        previousValue: null,
         error: 'No se puede dividir por cero',
         loading: false
       }
@@ -42,26 +63,15 @@ describe('Display.vue', () => {
   it('muestra spinner cuando está cargando', () => {
     const wrapper = mount(Display, {
       props: {
-        resultado: null,
+        displayValue: '0',
+        operation: null,
+        previousValue: null,
         error: null,
         loading: true
       }
     })
     expect(wrapper.find('.loading-state').exists()).toBe(true)
     expect(wrapper.find('.spinner').exists()).toBe(true)
-  })
-
-  it('formatea números correctamente', () => {
-    const wrapper = mount(Display, {
-      props: {
-        resultado: 3.14159,
-        error: null,
-        loading: false
-      }
-    })
-    // El número puede formatearse con coma o punto según el locale
-    const text = wrapper.text()
-    expect(text.includes('3.14159') || text.includes('3,14159')).toBe(true)
   })
 })
 
